@@ -5,6 +5,7 @@ Grau Informàtica
 48056540H - Aleix Segura Paz.
 21161168H - Aniol Serrano Ortega.
 --------------------------------------------------------------- */
+
 import java.util.concurrent.ExecutionException;
 
 public class ConcurrentTSP {
@@ -17,16 +18,14 @@ public class ConcurrentTSP {
 
         if (args.length < 1 || args.length > 3) exitWithUsage();
 
-        else if (args.length == 1){
+        else if (args.length == 1) {
             concurrentMethod = args[0];
             tsp = new TSP(concurrentMethod);
-        }
-        else if (args.length == 2) {
+        } else if (args.length == 2) {
             citiesFile = args[0];
             concurrentMethod = args[1];
             tsp = new TSP(citiesFile, concurrentMethod);
-        }
-        else{
+        } else {
             citiesFile = args[0];
             numberOfThreads = Integer.parseInt(args[1]);
             concurrentMethod = args[2];
@@ -39,7 +38,7 @@ public class ConcurrentTSP {
     /**
      * Finalizes program after displaying the valid usage with its parameters.
      */
-    private static void exitWithUsage(){
+    private static void exitWithUsage() {
         System.err.println("""
                 Error in Parameters. Usage: ConcurrentTSP [<Cities_File>] [<Num_Threads>] [<Concurrent_Method>] or\s
                   \t\t\t\t\t\t\tConcurrentTSP [<Cities_File>] [<Concurrent_Method>] or\s

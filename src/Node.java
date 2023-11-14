@@ -5,17 +5,19 @@ Grau Informàtica
 48056540H - Aleix Segura Paz.
 21161168H - Aniol Serrano Ortega.
 --------------------------------------------------------------- */
+
 import org.javatuples.Pair;
+
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
 // Node that implements the Branch&Bound search three elements in the solution space
-public class Node{
+public class Node {
     // Helps in tracing the path when the answer is found
     // Stores the edges of the path completed till current visited node
-    Vector<Pair<Integer, Integer> > path;
+    Vector<Pair<Integer, Integer>> path;
 
     // Stores the reduced matrix
     int[][] reducedMatrix;
@@ -31,55 +33,83 @@ public class Node{
     TSP tsp;
     long id = 0;
 
-    private static long totalNodes =0;
+    private static long totalNodes = 0;
 
     // Setters & Getters
     public long getId() {
         return id;
     }
-    public static long getTotalNodes() { return totalNodes; }
-    public Boolean[] getVisitedCities() { return visitedCities; }
-    public Boolean cityVisited(int city){ return visitedCities[city]; }
+
+    public static long getTotalNodes() {
+        return totalNodes;
+    }
+
+    public Boolean[] getVisitedCities() {
+        return visitedCities;
+    }
+
+    public Boolean cityVisited(int city) {
+        return visitedCities[city];
+    }
+
     public Vector<Pair<Integer, Integer>> getPath() {
         return path;
     }
+
     public void setPath(Vector<Pair<Integer, Integer>> path) {
         this.path = path;
     }
+
     public int[][] getReducedMatrix() {
         return reducedMatrix;
     }
+
     public void setReducedMatrix(int[][] reducedMatrix) {
         this.reducedMatrix = reducedMatrix;
     }
-    public int getCostMatrix(int i, int j) { return reducedMatrix[i][j]; }
+
+    public int getCostMatrix(int i, int j) {
+        return reducedMatrix[i][j];
+    }
+
     public int getCost() {
         return cost;
     }
+
     public void setCost(int cost) {
         this.cost = cost;
     }
-    public void calculateSetCost() { setCost(calculateCost()); }
+
+    public void calculateSetCost() {
+        setCost(calculateCost());
+    }
+
     public int getVertex() {
         return vertex;
     }
+
     public void setVertex(int vertex) {
         this.vertex = vertex;
     }
+
     public int getLevel() {
         return level;
     }
+
     public void setLevel(int level) {
         this.level = level;
     }
-    public void addPathStep(int startCity, int destCity) { path.addElement(new Pair<>(startCity, destCity)); }
+
+    public void addPathStep(int startCity, int destCity) {
+        path.addElement(new Pair<>(startCity, destCity));
+    }
 
     // Constructors
     public Node(TSP tsp, int[][] reducedMatrix) {
         this.tsp = tsp;
 
         this.reducedMatrix = new int[tsp.getnCities()][tsp.getnCities()]; // inicialitza el tamany de la matriu reuida, encara no redueix
-        for(int x = 0; x < reducedMatrix.length; x++)
+        for (int x = 0; x < reducedMatrix.length; x++)
             this.reducedMatrix[x] = reducedMatrix[x].clone();
 
 
@@ -102,18 +132,18 @@ public class Node{
         this.id = ++totalNodes;
 
         // Copy path data from the parent node to the current node
-        if (parentNode.getPath()!=null)
-            this.path = ( Vector<Pair<Integer, Integer> >) parentNode.getPath().clone();
+        if (parentNode.getPath() != null)
+            this.path = (Vector<Pair<Integer, Integer>>) parentNode.getPath().clone();
         else
             this.path = new Vector<>();
         // Skip for the root node
         if (level != 0)
             // Add a current edge to the path
-            addPathStep(i,j);
+            addPathStep(i, j);
 
         // Copy reduce matrix data from the parent node to the current node
         this.reducedMatrix = new int[tsp.getnCities()][tsp.getnCities()];
-        for(int x = 0; x < parentNode.getReducedMatrix().length; x++)
+        for (int x = 0; x < parentNode.getReducedMatrix().length; x++)
             this.reducedMatrix[x] = parentNode.getReducedMatrix()[x].clone();
 
         // Reserve and clone the visited cities array.
@@ -163,7 +193,7 @@ public class Node{
         // row[i] contains minimum in row i
         for (int i = 0; i < tsp.getnCities(); i++) {
             for (int j = 0; j < tsp.getnCities(); j++) {
-                if (reducedMatrix[i][j] != TSP.INF && (row[i]== TSP.INF || reducedMatrix[i][j] < row[i])) {
+                if (reducedMatrix[i][j] != TSP.INF && (row[i] == TSP.INF || reducedMatrix[i][j] < row[i])) {
                     row[i] = reducedMatrix[i][j];
                 }
             }
@@ -188,7 +218,7 @@ public class Node{
         // col[j] contains minimum in col j
         for (int i = 0; i < tsp.getnCities(); i++) {
             for (int j = 0; j < tsp.getnCities(); j++) {
-                if (reducedMatrix[i][j] != TSP.INF && (col[j]== TSP.INF || reducedMatrix[i][j] < col[j])) {
+                if (reducedMatrix[i][j] != TSP.INF && (col[j] == TSP.INF || reducedMatrix[i][j] < col[j])) {
                     col[j] = reducedMatrix[i][j];
                 }
             }
@@ -197,7 +227,7 @@ public class Node{
         // in each column
         for (int i = 0; i < tsp.getnCities(); i++) {
             for (int j = 0; j < tsp.getnCities(); j++) {
-                if (reducedMatrix[i][j] != TSP.INF &&  col[j] != TSP.INF) {
+                if (reducedMatrix[i][j] != TSP.INF && col[j] != TSP.INF) {
                     reducedMatrix[i][j] -= col[j];
                 }
             }
@@ -205,28 +235,27 @@ public class Node{
     }
 
     // Function to print list of cities visited following least cost
-    void printPath(PrintStream out, Boolean withCosts)
-    {
+    void printPath(PrintStream out, Boolean withCosts) {
         out.print(pathToString(withCosts));
     }
 
     public String pathToString(Boolean withCosts) {
         //String out ="[Node %d] "+getId()+"\n";
         String out = path.stream()
-                .map((step) ->  {
+                .map((step) -> {
                     String out_step;
                     if (withCosts)
-                        out_step = (step.getValue0()+1)+"->"+(step.getValue1()+1)+" ("+tsp.getDistanceMatrix(step.getValue0(), step.getValue1())+")";
+                        out_step = (step.getValue0() + 1) + "->" + (step.getValue1() + 1) + " (" + tsp.getDistanceMatrix(step.getValue0(), step.getValue1()) + ")";
                     else
-                        out_step = (step.getValue0()+1)+"->"+(step.getValue1()+1);
+                        out_step = (step.getValue0() + 1) + "->" + (step.getValue1() + 1);
                     return out_step;
                 })
                 .collect(Collectors.joining(", ", "{", "}"));
 
         if (withCosts)
-            out +=" ==> Total Cost "+getCost()+".\n";
+            out += " ==> Total Cost " + getCost() + ".\n";
         else
-            out +=".\n";
+            out += ".\n";
 
         return out;
     }
@@ -239,20 +268,18 @@ public class Node{
                 str.append(String.format("%1$" + TSP.CMatrixPadding + "s", matrix[j])).append(" ");
             str.append("]");
         }
-        return str+"\n";
+        return str + "\n";
     }
 
     @Override
     public String toString() {
         //return "["+getId()+":"+getLevel()+","+getCost()+","+getVertex()+"]";
-        return  "___________________________________________________________________________________________\n"+
-                "Node:  \t"+ getId()+"\n"+
-                "Path:  \t" + pathToString(true)+
-                "Matrix:\t" + ReducedMatrixToString()+
-                "Cost:  \t" + getCost()+"\n"+
-                "Vertex:\t"+ getVertex()+"\n"+
-                "Level: \t" + getLevel()+"\n";
+        return "___________________________________________________________________________________________\n" +
+                "Node:  \t" + getId() + "\n" +
+                "Path:  \t" + pathToString(true) +
+                "Matrix:\t" + ReducedMatrixToString() +
+                "Cost:  \t" + getCost() + "\n" +
+                "Vertex:\t" + getVertex() + "\n" +
+                "Level: \t" + getLevel() + "\n";
     }
-
-
 }

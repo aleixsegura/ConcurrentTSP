@@ -5,6 +5,7 @@ Grau Informàtica
 48056540H - Aleix Segura Paz.
 21161168H - Aniol Serrano Ortega.
 --------------------------------------------------------------- */
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -42,36 +43,49 @@ public class TSP {
     public int getnCities() {
         return nCities;
     }
+
     public void setnCities(int nCities) {
         this.nCities = nCities;
     }
+
     public Node getSolution() {
         return solution;
     }
+
     public void setSolution(Node solution) {
         this.solution = solution;
     }
-    public int getDistanceMatrix(int i, int j) { return DistanceMatrix[i][j]; }
+
+    public int getDistanceMatrix(int i, int j) {
+        return DistanceMatrix[i][j];
+    }
+
     public int[][] getDistanceMatrix() {
         return DistanceMatrix;
     }
-    public long getPurgedNodes() { return purgedNodes; }
-    public long getProcessedNodes() { return processedNodes; }
+
+    public long getPurgedNodes() {
+        return purgedNodes;
+    }
+
+    public long getProcessedNodes() {
+        return processedNodes;
+    }
 
     // Constructors.
-    public TSP(String concurrentMethod){
+    public TSP(String concurrentMethod) {
         this.numberOfThreads = DEFAULT_NUMBER_OF_THREADS;
         this.concurrentMethod = concurrentMethod;
         InitDefaultCitiesDistances();
     }
 
-    public TSP(String citiesPath, String concurrentMethod){
+    public TSP(String citiesPath, String concurrentMethod) {
         this.numberOfThreads = DEFAULT_NUMBER_OF_THREADS;
         this.concurrentMethod = concurrentMethod;
         readCitiesFile(citiesPath);
     }
 
-    public TSP(String citiesPath, int numberOfThreads, String concurrentMethod){
+    public TSP(String citiesPath, int numberOfThreads, String concurrentMethod) {
         this.numberOfThreads = numberOfThreads;
         this.concurrentMethod = concurrentMethod;
         readCitiesFile(citiesPath);
@@ -80,9 +94,9 @@ public class TSP {
 
     public void InitDefaultCitiesDistances() {
         DistanceMatrix = new int[][]{{INF, 10, 15, 20},
-                                    {10, INF, 35, 25},
-                                    {15, 35, INF, 30},
-                                    {20, 25, 30, INF}};
+                {10, INF, 35, 25},
+                {15, 35, INF, 30},
+                {20, 25, 30, INF}};
         nCities = 4;
     }
 
@@ -113,7 +127,7 @@ public class TSP {
             }
 
         } catch (FileNotFoundException e) {
-            System.err.printf("[TSP::ReadCitiesFile] File %s not found.\n",citiesPath);
+            System.err.printf("[TSP::ReadCitiesFile] File %s not found.\n", citiesPath);
             e.printStackTrace();
         }
     }
@@ -122,7 +136,7 @@ public class TSP {
         Instant start = Instant.now();
 
         Node solution = solve(DistanceMatrix);
-        printSolution("\n Optimal Solution: ", solution);
+        printSolution("\nOptimal Solution: ", solution);
 
         Instant finish = Instant.now();
         long timeElapsed = Duration.between(start, finish).toMillis();
@@ -158,7 +172,7 @@ public class TSP {
         return getSolution();
     }
 
-    private void printTypeTest(){
+    private void printTypeTest() {
         System.out.println("\n___________________________________________________________________________________________________________________________________________________");
         System.out.printf("Test with %d cities and %d threads.\n", getnCities(), numberOfThreads);
     }
@@ -172,7 +186,7 @@ public class TSP {
         getRootChildren();
 
         int i = 0;
-        for (Node rootChild: rootChildren){
+        for (Node rootChild : rootChildren) {
             RootChildProblem subProblem = new RootChildProblem(this, rootChild);
             subProblems[i++] = subProblem;
             Future<Node> subProblemSolution = executorService.submit(subProblem);
@@ -187,13 +201,13 @@ public class TSP {
     /**
      * Simply collects root children and calculates it cost.
      */
-    public void getRootChildren(){
+    public void getRootChildren() {
         rootChildren = new Node[nCities - 1];
         int rootCity = root.getVertex();
         processedNodes++;
 
         int i = 0;
-        for (int city = 1; city < nCities; city++){
+        for (int city = 1; city < nCities; city++) {
             Node child = new Node(this, root, 1, rootCity, city);
             int childCost = root.getCost() + root.getCostMatrix(rootCity, city) + child.calculateCost();
             child.setCost(childCost);
@@ -212,8 +226,8 @@ public class TSP {
     /**
      * Reclaims local statistics from tasks and integrates to globals.
      */
-    public void updateStatistics(){
-        for (RootChildProblem subProblem: subProblems){
+    public void updateStatistics() {
+        for (RootChildProblem subProblem : subProblems) {
             processedNodes += subProblem.getProcessedNodes();
             purgedNodes += subProblem.getPurgedNodes();
         }
@@ -222,12 +236,14 @@ public class TSP {
     /**
      * Simply prints final statistics.
      */
-    public void printStatistics(){
+    public void printStatistics() {
         System.out.printf("\nFinal Total nodes: %d \tProcessed nodes: %d \tPurged nodes: %d \tPending nodes: %d \tBest Solution: %d.",
                 Node.getTotalNodes(), processedNodes, purgedNodes, RootChildProblem.getNodePriorityQueue().size(), getSolution() == null ? 0 : getSolution().getCost());
     }
 
-    public void printSolution(String msg, Node sol) { printSolution(System.out, msg, sol); }
+    public void printSolution(String msg, Node sol) {
+        printSolution(System.out, msg, sol);
+    }
 
     public void printSolution(PrintStream out, String msg, Node sol) {
         out.print(msg);

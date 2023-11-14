@@ -5,15 +5,17 @@ Grau Informàtica
 48056540H - Aleix Segura Paz.
 21161168H - Aniol Serrano Ortega.
 --------------------------------------------------------------- */
+import jdk.jshell.spi.ExecutionControl;
+
 import java.util.concurrent.ExecutionException;
 
 public class ConcurrentTSP {
 
-    public static void main(String[] args) throws ExecutionException, InterruptedException {
+    public static void main(String[] args) throws ExecutionException, InterruptedException, ExecutionControl.NotImplementedException {
         TSP tsp = null;
         String citiesFile;
         int numberOfThreads;
-        String concurrentMethod;
+        String concurrentMethod = null;
 
         if (args.length < 1 || args.length > 3) exitWithUsage();
 
@@ -32,7 +34,11 @@ public class ConcurrentTSP {
             concurrentMethod = args[2];
             tsp = new TSP(citiesFile, numberOfThreads, concurrentMethod);
         }
-        assert tsp != null;
+
+        assert concurrentMethod != null;
+        if (concurrentMethod.equals("ForkJoinPool")) throw new ExecutionControl.NotImplementedException("" +
+                "This part hasn't been implemented.");
+
         tsp.solve();
     }
 

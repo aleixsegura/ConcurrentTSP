@@ -18,6 +18,7 @@ public class TSP {
     private final int DEFAULT_NUMBER_OF_THREADS = 50;
     private final int numberOfThreads;
     private final String concurrentMethod;
+
     private Node root;
     private Node[] rootChildren;
     private RootChildProblem[] subProblems;
@@ -142,7 +143,7 @@ public class TSP {
 
         switch (concurrentMethod) {
             case "FixedThreadPool" -> {
-                executorService = Executors.newFixedThreadPool(numberOfThreads);
+                executorService = Executors.newFixedThreadPool(numberOfThreads - 1);
                 solve(executorService);
             }
             case "CachedThreadPool" -> {
@@ -159,7 +160,7 @@ public class TSP {
 
     private void printTypeTest(){
         System.out.println("\n___________________________________________________________________________________________________________________________________________________");
-        System.out.printf("Test with %d cities.\n", getnCities());
+        System.out.printf("Test with %d cities and %d threads.\n", getnCities(), numberOfThreads);
     }
 
     /**
@@ -173,17 +174,18 @@ public class TSP {
         int i = 0;
         for (Node rootChild: rootChildren){
             RootChildProblem subProblem = new RootChildProblem(this, rootChild);
-            Future<Node> subProblemSolution = executorService.submit(subProblem);
             subProblems[i++] = subProblem;
+            Future<Node> subProblemSolution = executorService.submit(subProblem);
             solutions.add(subProblemSolution);
         }
+
         executorService.shutdown();
         getBestSolution();
         updateStatistics();
     }
 
     /**
-     * Simply generates root children and calculates it cost.
+     * Simply collects root children and calculates it cost.
      */
     public void getRootChildren(){
         rootChildren = new Node[nCities - 1];
@@ -200,7 +202,7 @@ public class TSP {
     }
 
     /**
-     * Waits for tasks to finalize so the best optimal solution can be obtained.
+     * Waits for tasks to finalize so the best solution can be obtained.
      */
     public void getBestSolution() throws ExecutionException, InterruptedException {
         for (Future<Node> solutionFuture : solutions) solutionFuture.get();
@@ -208,7 +210,7 @@ public class TSP {
     }
 
     /**
-     * Reclaims local statistics from sub-problem tasks and integrates to globals.
+     * Reclaims local statistics from tasks and integrates to globals.
      */
     public void updateStatistics(){
         for (RootChildProblem subProblem: subProblems){

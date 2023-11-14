@@ -11,9 +11,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class RootChildProblem implements Callable<Node> {
-    private static final PriorityBlockingQueue<Node> nodePriorityQueue =
-            new PriorityBlockingQueue<>(10, Collections.reverseOrder(Comparator.comparingInt(Node::getCost))
-    );
+    private static final PriorityBlockingQueue<Node> nodePriorityQueue = new PriorityBlockingQueue<>(10,
+            Collections.reverseOrder(Comparator.comparingInt(Node::getCost)));
+
     private volatile static Node solution = null;
 
     private int processedNodes;
@@ -37,7 +37,7 @@ public class RootChildProblem implements Callable<Node> {
 
     /**
      * Each thread adds a sub problem to a PriorityBlockingQueue, then the paths are explored concurrently and
-     * each sub problem work with shared instances 'solution' that represents the current best solution and
+     * each sub problem work with shared instance 'solution' that represents the current best solution and
      * the queue so the nodes in queue and the current best solution affect each thread.
      * @return current best solution or best solution if every path has been explored.
      */

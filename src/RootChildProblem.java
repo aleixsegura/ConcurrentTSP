@@ -5,16 +5,18 @@ Grau Informàtica
 48056540H - Aleix Segura Paz.
 21161168H - Aniol Serrano Ortega.
 --------------------------------------------------------------- */
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.concurrent.Callable;
 import java.util.concurrent.PriorityBlockingQueue;
 
-public class RootChildProblem implements Callable<Node> {
+public class RootChildProblem implements Runnable {
     private static final PriorityBlockingQueue<Node> nodePriorityQueue = new PriorityBlockingQueue<>(10,
-            Collections.reverseOrder(Comparator.comparingInt(Node::getCost)));
+            Comparator.comparingInt(Node::getCost));
 
-    private volatile static Node solution = null;
+    private static final PriorityBlockingQueue<Node> solutions = new PriorityBlockingQueue<>(10,
+            Comparator.comparingInt(Node::getCost));
+
+    private Node localSolution = null;
+    private boolean cancel = false;
 
     private int processedNodes;
     private int purgedNodes;
@@ -33,7 +35,7 @@ public class RootChildProblem implements Callable<Node> {
     public int getProcessedNodes() { return processedNodes; }
     public int getPurgedNodes() { return purgedNodes; }
     public static PriorityBlockingQueue<Node> getNodePriorityQueue() { return nodePriorityQueue; }
-    public static Node getSolution() { return solution; }
+    public static Node getSolution() { return solutions.poll(); }
 
     /**
      * Each thread adds a sub problem to a PriorityBlockingQueue, then the paths are explored concurrently and
@@ -42,21 +44,24 @@ public class RootChildProblem implements Callable<Node> {
      * @return current best solution or best solution if every path has been explored.
      */
     @Override
-    public Node call(){
+    public void run(){
         pushNode(root);
         Node min;
         int row;
 
-        while ((min = popNode()) != null) {
+        while ((min = popNode()) != null && !cancel) {
             processedNodes++;
             row = min.getVertex();
 
             if (min.getLevel() == TSP.nCities - 1) {
                 min.addPathStep(row, 0); // Afegir el cami de tornada.
 
-                if (solution == null || min.getCost() < solution.getCost()) {   // si encara no hi ha solucio possible afegir, si l'actual es millor que la que hi ha substiuir
-                    solution = min;
-                    purgeWorseNodes(min.getCost());
+                if (localSolution == null || min.getCost() < localSolution.getCost()) {   // si encara no hi ha solucio possible afegir, si l'actual es millor que la que hi ha substiuir
+                    localSolution = min;
+                    solutions.add(localSolution);
+                    Node currentBestSolution = solutions.peek();
+                    assert currentBestSolution != null;
+                    purgeWorseNodes(currentBestSolution.getCost());
                 }
             }
 
@@ -66,14 +71,13 @@ public class RootChildProblem implements Callable<Node> {
                     int childCost = min.getCost() + min.getCostMatrix(row, column) + child.calculateCost();
                     child.setCost(childCost);
 
-                    if (solution == null || child.getCost() < solution.getCost())
+                    if (localSolution == null || child.getCost() < localSolution.getCost())
                         pushNode(child);
-                    else if (solution != null && child.getCost() > solution.getCost())
+                    else if (localSolution != null && child.getCost() > localSolution.getCost())
                         purgedNodes++;
                 }
             }
         }
-        return solution;
     }
 
     private void pushNode(Node node) { nodePriorityQueue.add(node); }
@@ -84,5 +88,9 @@ public class RootChildProblem implements Callable<Node> {
         int pendingNodes = nodePriorityQueue.size();
         nodePriorityQueue.removeIf(node -> node.getCost() >= minCost);
         purgedNodes += pendingNodes - nodePriorityQueue.size();
+    }
+
+    public void cancelThread() {
+        cancel = true;
     }
 }

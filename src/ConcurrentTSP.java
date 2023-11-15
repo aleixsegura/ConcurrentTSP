@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 
 public class ConcurrentTSP {
 
-    public static void main(String[] args) throws ExecutionException, InterruptedException, ExecutionControl.NotImplementedException {
+    public static void main(String[] args) throws ExecutionControl.NotImplementedException {
         TSP tsp = null;
         String citiesFile;
         int numberOfThreads;

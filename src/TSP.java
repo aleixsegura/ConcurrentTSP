@@ -23,7 +23,7 @@ public class TSP {
     private Node root;
     private Node[] rootChildren;
     private RootChildProblem[] subProblems;
-    private final ArrayList<Future<Node>> solutions = new ArrayList<>();
+    private final ArrayList<Future<?>> solutions = new ArrayList<>();
 
     public static final int INF = -1;
     public static final int CMatrixPadding = 3;
@@ -132,7 +132,7 @@ public class TSP {
         }
     }
 
-    public void solve() throws ExecutionException, InterruptedException {
+    public void solve() {
         Instant start = Instant.now();
 
         Node solution = solve(DistanceMatrix);
@@ -148,7 +148,7 @@ public class TSP {
      * Initializes root node, executor services or ForkJoinPool depending on the parameter 'concurrentMethod'
      * introduced and calls a method to solve the problem.
      */
-    public Node solve(int[][] CostMatrix) throws ExecutionException, InterruptedException {
+    public Node solve(int[][] CostMatrix) {
         ExecutorService executorService;
         root = new Node(this, CostMatrix);
         root.calculateSetCost();
@@ -181,7 +181,7 @@ public class TSP {
      * Launches root children sub problems in a way that the parallelized tasks have a proper granularity to be
      * launched to multiple threads.
      */
-    public void solve(ExecutorService executorService) throws ExecutionException, InterruptedException {
+    public void solve(ExecutorService executorService) {
         subProblems = new RootChildProblem[nCities - 1];
         getRootChildren();
 
@@ -189,10 +189,9 @@ public class TSP {
         for (Node rootChild : rootChildren) {
             RootChildProblem subProblem = new RootChildProblem(this, rootChild);
             subProblems[i++] = subProblem;
-            Future<Node> subProblemSolution = executorService.submit(subProblem);
+            Future<?> subProblemSolution = executorService.submit(subProblem);
             solutions.add(subProblemSolution);
         }
-
         executorService.shutdown();
         getBestSolution();
         updateStatistics();
@@ -218,9 +217,18 @@ public class TSP {
     /**
      * Waits for tasks to finalize so the best solution can be obtained.
      */
-    public void getBestSolution() throws ExecutionException, InterruptedException {
-        for (Future<Node> solutionFuture : solutions) solutionFuture.get();
-        solution = RootChildProblem.getSolution();
+    public void getBestSolution() {
+        try{
+            for (Future<?> solutionFuture : solutions) solutionFuture.get();
+            solution = RootChildProblem.getSolution();
+        } catch (Exception e){
+            for (RootChildProblem subProblem: subProblems){
+                subProblem.cancelThread();
+                System.err.println("Received exception: " + e + " during concurrent execution.");
+                e.printStackTrace();
+                System.exit(-1);
+            }
+        }
     }
 
     /**

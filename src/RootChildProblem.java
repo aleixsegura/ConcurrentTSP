@@ -6,6 +6,7 @@ Grau Informàtica
 21161168H - Aniol Serrano Ortega.
 --------------------------------------------------------------- */
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class RootChildProblem implements Runnable {
@@ -56,7 +57,7 @@ public class RootChildProblem implements Runnable {
             if (min.getLevel() == TSP.nCities - 1) {
                 min.addPathStep(row, 0); // Afegir el cami de tornada.
 
-                if (localSolution == null || min.getCost() < localSolution.getCost()) {   // si encara no hi ha solucio possible afegir, si l'actual es millor que la que hi ha substiuir
+                if (localSolution == null || min.getCost() < Objects.requireNonNull(solutions.peek()).getCost()) {   // si encara no hi ha solucio possible afegir, si l'actual es millor que la que hi ha substiuir
                     localSolution = min;
                     solutions.add(localSolution);
                     Node currentBestSolution = solutions.peek();
@@ -71,9 +72,9 @@ public class RootChildProblem implements Runnable {
                     int childCost = min.getCost() + min.getCostMatrix(row, column) + child.calculateCost();
                     child.setCost(childCost);
 
-                    if (localSolution == null || child.getCost() < localSolution.getCost())
+                    if (localSolution == null || child.getCost() < Objects.requireNonNull(solutions.peek()).getCost())
                         pushNode(child);
-                    else if (localSolution != null && child.getCost() > localSolution.getCost())
+                    else if (localSolution != null && child.getCost() > Objects.requireNonNull(solutions.peek()).getCost())
                         purgedNodes++;
                 }
             }

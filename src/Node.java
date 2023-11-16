@@ -234,6 +234,12 @@ public class Node {
         }
     }
 
+    public void cleanup() {
+        this.path.clear();
+        this.reducedMatrix = null;
+        this.visitedCities = null;
+    }
+
     // Function to print list of cities visited following least cost
     void printPath(PrintStream out, Boolean withCosts) {
         out.print(pathToString(withCosts));

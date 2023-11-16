@@ -6,17 +6,15 @@ Grau Informàtica
 21161168H - Aniol Serrano Ortega.
 --------------------------------------------------------------- */
 import java.util.Comparator;
-import java.util.Objects;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class RootChildProblem implements Runnable {
     private static final PriorityBlockingQueue<Node> nodePriorityQueue = new PriorityBlockingQueue<>(10,
             Comparator.comparingInt(Node::getCost));
 
-    private static final PriorityBlockingQueue<Node> solutions = new PriorityBlockingQueue<>(10,
+    public static final PriorityBlockingQueue<Node> solutions = new PriorityBlockingQueue<>(10,
             Comparator.comparingInt(Node::getCost));
 
-    private Node localSolution = null;
     private boolean cancel = false;
 
     private int processedNodes;
@@ -36,48 +34,62 @@ public class RootChildProblem implements Runnable {
     public int getProcessedNodes() { return processedNodes; }
     public int getPurgedNodes() { return purgedNodes; }
     public static PriorityBlockingQueue<Node> getNodePriorityQueue() { return nodePriorityQueue; }
-    public static Node getSolution() { return solutions.poll(); }
+    private Node getSolution() { return solutions.peek(); }
+
 
     /**
-     * Each thread adds a sub problem to a PriorityBlockingQueue, then the paths are explored concurrently and
-     * each sub problem work with shared instance 'solution' that represents the current best solution and
-     * the queue so the nodes in queue and the current best solution affect each thread.
-     * @return current best solution or best solution if every path has been explored.
+     * Each thread adds a sub problem to a PQ: nodePriorityQueue, then the paths are explored concurrently and
+     * each sub thread work with shared 'solution' that is the first element of solutions PQ.
      */
     @Override
     public void run(){
-        pushNode(root);
-        Node min;
-        int row;
+        try{
+            pushNode(root);
+            Node min;
+            int row;
 
-        while ((min = popNode()) != null && !cancel) {
-            processedNodes++;
-            row = min.getVertex();
+            while ((min = popNode()) != null && !cancel) {
+                processedNodes++;
+                row = min.getVertex();
 
-            if (min.getLevel() == TSP.nCities - 1) {
-                min.addPathStep(row, 0); // Afegir el cami de tornada.
+                if (min.getLevel() == TSP.nCities - 1) {
+                    min.addPathStep(row, 0);
+                    if (getSolution() == null || min.getCost() < getSolution().getCost()){
+                        updateSolution(min);
+                    }
+                }
 
-                if (localSolution == null || min.getCost() < Objects.requireNonNull(solutions.peek()).getCost()) {   // si encara no hi ha solucio possible afegir, si l'actual es millor que la que hi ha substiuir
-                    localSolution = min;
-                    solutions.add(localSolution);
-                    Node currentBestSolution = solutions.peek();
-                    assert currentBestSolution != null;
-                    purgeWorseNodes(currentBestSolution.getCost());
+                if ( processedNodes % 10 == 0 && getSolution() != null){
+                    purgeWorseNodes(getSolution().getCost());
+                }
+
+                if (getSolution() == null || min.getCost() < getSolution().getCost()){
+                    for (int column = 0; column < TSP.nCities; column++){
+                        if (!min.cityVisited(column) && min.getCostMatrix(row, column) != TSP.INF){
+                            Node child = new Node(tsp, min, min.getLevel() + 1, row, column);
+                            int childCost = min.getCost() + min.getCostMatrix(row, column) + child.calculateCost();
+                            child.setCost(childCost);
+
+                            Node currentSolution = getSolution();
+                            if (currentSolution == null || child.getCost() < currentSolution.getCost()) {
+                                pushNode(child);
+                            }
+                            else if (child.getCost() > currentSolution.getCost())
+                                purgedNodes++;
+                        }
+                    }
                 }
             }
+        } catch (OutOfMemoryError e) {
+            throw new OutOfMemoryError();
+        }
+    }
 
-            for (int column = 0; column < TSP.nCities; column++){
-                if (!min.cityVisited(column) && min.getCostMatrix(row, column) != TSP.INF){
-                    Node child = new Node(tsp, min, min.getLevel() + 1, row, column);
-                    int childCost = min.getCost() + min.getCostMatrix(row, column) + child.calculateCost();
-                    child.setCost(childCost);
-
-                    if (localSolution == null || child.getCost() < Objects.requireNonNull(solutions.peek()).getCost())
-                        pushNode(child);
-                    else if (localSolution != null && child.getCost() > Objects.requireNonNull(solutions.peek()).getCost())
-                        purgedNodes++;
-                }
-            }
+    private void updateSolution(Node min) {
+        Node currentSolution = getSolution();
+        if (currentSolution == null || min.getCost() < currentSolution.getCost()) {
+            solutions.clear();
+            solutions.add(min);
         }
     }
 
@@ -87,9 +99,16 @@ public class RootChildProblem implements Runnable {
 
     private void purgeWorseNodes(int minCost) {
         int pendingNodes = nodePriorityQueue.size();
-        nodePriorityQueue.removeIf(node -> node.getCost() >= minCost);
+        nodePriorityQueue.removeIf(node -> {
+            boolean remove = node.getCost() >= minCost;
+            if (remove) {
+                node.cleanup();
+            }
+            return remove;
+        });
         purgedNodes += pendingNodes - nodePriorityQueue.size();
     }
+
 
     public void cancelThread() {
         cancel = true;

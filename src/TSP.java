@@ -157,7 +157,7 @@ public class TSP {
 
         switch (concurrentMethod) {
             case "FixedThreadPool" -> {
-                executorService = Executors.newFixedThreadPool(numberOfThreads - 1);
+                executorService = Executors.newFixedThreadPool(numberOfThreads);
                 solve(executorService);
             }
             case "CachedThreadPool" -> {
@@ -220,7 +220,7 @@ public class TSP {
     public void getBestSolution() {
         try{
             for (Future<?> solutionFuture : solutions) solutionFuture.get();
-            solution = RootChildProblem.getSolution();
+            solution = RootChildProblem.solutions.poll();
         } catch (Exception e){
             for (RootChildProblem subProblem: subProblems){
                 subProblem.cancelThread();

@@ -109,7 +109,6 @@ public class RootChildProblem implements Runnable {
         purgedNodes += pendingNodes - nodePriorityQueue.size();
     }
 
-
     public void cancelThread() {
         cancel = true;
     }

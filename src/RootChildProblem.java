@@ -2,8 +2,8 @@
 Práctica 2.
 Código fuente: RootChildProblem.java
 Grau Informàtica
-48056540H - Aleix Segura Paz.
-21161168H - Aniol Serrano Ortega.
+Aleix Segura Paz.
+Aniol Serrano Ortega.
 --------------------------------------------------------------- */
 import java.util.Comparator;
 import java.util.concurrent.PriorityBlockingQueue;
